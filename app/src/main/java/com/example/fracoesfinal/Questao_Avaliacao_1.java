@@ -1,16 +1,21 @@
 package com.example.fracoesfinal;
 
+import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.fracoesfinal.banco.DatabaseHelper;
+import com.example.fracoesfinal.banco.Question;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
@@ -22,7 +27,9 @@ import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.List;
+
+
 
 
 public class Questao_Avaliacao_1 extends AppCompatActivity {
@@ -30,7 +37,6 @@ public class Questao_Avaliacao_1 extends AppCompatActivity {
     // Declare suas variáveis PieChart
     private PieChart graficoPizza1;
     private PieChart graficoPizza2;
-    private PieChart graficoPizza3;
     private int selectedDenominator = 1;
     private int selectedNumerator = 1;
     private boolean isGraph1Editable = true;
@@ -39,10 +45,27 @@ public class Questao_Avaliacao_1 extends AppCompatActivity {
 
     private PieEntry lastSelectedSlice = null;
 
-    private String respostaCorreta1 = "2/4"; // Substitua pelo valor correto que você está esperando
+     // Substitua pelo valor correto que você está esperando
     private String respostaCorreta2 = "1/4"; // Substitua pelo valor correto que você está esperando
 
     private String respostaCorreta3 = "3/4";
+
+    TextView respostaCorreta1;
+
+    private float sumOfSelectedSlices = 0;
+    private float sumOfSelectedSlices2 = 0;
+
+    private int selectedSliceIndex = -1;
+    private ArrayList<PieEntry> entradasGrafico1 = new ArrayList<>();
+
+    private List<Integer> sliceColors = new ArrayList<>();
+
+
+    private TextView perguntaPrincipal, parte1, parte2;
+
+
+
+
 
     // Declare outras variáveis e views necessárias
 
@@ -51,67 +74,88 @@ public class Questao_Avaliacao_1 extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_questao_avaliacao1);
 
-        View primeiroEstagioLayout = findViewById(R.id.primeiro_estagio);
-        View segundoEstagioLayout = findViewById(R.id.segundo_estagio);
+        TextView textViewSum1 = findViewById(R.id.textViewSum1);
+        TextView textViewSum2 = findViewById(R.id.textViewSum2);
 
+
+        perguntaPrincipal = findViewById(R.id.Pergunta);
+        parte1 = findViewById(R.id.perguntaParte1);
+        parte2 = findViewById(R.id.perguntaParte2);
+
+
+
+
+    //BANCO DE DADOS
+        DatabaseHelper dbHelper = new DatabaseHelper(this);
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        // Inserir a primeira pergunta
+        ContentValues values = new ContentValues();
+        values.put("perguntaPrincipal", "Sua mãe está fazendo uma salada de frutas e quer adicionar melancia. Ela cortou 1/6 de uma melancia em cubos e adicionou à salada, e depois decidiu adicionar mais 1/6 de melancia. Qual será a quantidade total de melancia na salada?");
+        values.put("parte1", "Insira o denominador no gráfico e depois selecione o número de fatias para a primeira parte da fração.");
+        values.put("parte2", "Insira o denominador no gráfico e depois selecione o número de fatias para a segunda parte da fração.");
+        values.put("resposta_parte1", "1/6");
+        values.put("resposta_parte2", "1/6");
+        values.put("resposta_correta", "2/6");
+        db.insert("pergunta", null, values);
+        // Inserir a segunda pergunta
+        values.clear();
+        values.put("perguntaPrincipal", "Se você cortar a melancia em 10 fatias iguais e der 4 fatias para os adultos e 3 fatias para as crianças, responda qual a fração que representa a quantidade de fatias que foi dividida");
+        values.put("parte1", "Insira o denominador no gráfico e depois selecione o número de fatias para a primeira parte da fração.");
+        values.put("parte2", "Insira o denominador no gráfico e depois selecione o número de fatias para a segunda parte da fração.");
+        values.put("resposta_parte1", "4/10");
+        values.put("resposta_parte2", "3/10");
+        values.put("resposta_correta", "7/10");
+        db.insert("pergunta", null, values);
+
+        // Inserir a terceira pergunta
+        values.clear();
+        values.put("perguntaPrincipal", "Uma pesa 3/4 de quilo e a outra pesa 5/4 de quilo. Qual é o´peso total das duas melancias??");
+        values.put("parte1", "Insira o denominador no gráfico e depois selecione o número de fatias para a primeira parte da fração.");
+        values.put("parte2", "Insira o denominador no gráfico e depois selecione o número de fatias para a segunda parte da fração.");
+        values.put("resposta_parte1", "5/4");
+        values.put("resposta_parte2", "3/4");
+        values.put("resposta_correta", "8/4");
+        db.insert("pergunta", null, values);
+
+        dbHelper.getReadableDatabase();
+        // Consultar todas as perguntas
+        Cursor cursor = db.rawQuery("SELECT * FROM pergunta ORDER BY RANDOM() LIMIT 1", null);
+        // Percorrer os resultados
+        if (cursor.moveToFirst()) {
+            int columnIndex = cursor.getColumnIndex("perguntaPrincipal");
+            int columnIndexParte1 = cursor.getColumnIndex("parte1");
+            int columnIndexParte2 = cursor.getColumnIndex("parte2");
+            if (columnIndex >= 0) {
+                String perguntaP = cursor.getString(columnIndex);
+                String p1 = cursor.getString(columnIndexParte1);
+                String p2 = cursor.getString(columnIndexParte2);
+                perguntaPrincipal.setText(perguntaP);
+                parte1.setText(p1);
+                parte2.setText(p2);
+            }
+        }
+
+
+        cursor.close();
+        db.close();
+
+        //FIM BANCO DE DADOS
 
 
         // Inicialize suas variáveis PieChart
         graficoPizza1 = findViewById(R.id.grafico_pizza1);
         graficoPizza2 = findViewById(R.id.grafico_pizza2);
-        graficoPizza3 = findViewById(R.id.grafico_pizza3);
 
-        //GRAFICO 1 ---------------------------------------------------------
+        // Configurar gráfico 1
         ArrayList<PieEntry> entradasGrafico1 = new ArrayList<>();
-        graficoPizza1.setTouchEnabled(true);
         entradasGrafico1.add(new PieEntry(1f, "1"));
-        PieDataSet dataSetGrafico1 = new PieDataSet(entradasGrafico1, " ");
-        dataSetGrafico1.setColors(ColorTemplate.COLORFUL_COLORS); // Cores predefinidas
-        dataSetGrafico1.setDrawValues(false);
-        PieData dataGrafico1 = new PieData(dataSetGrafico1);
-        graficoPizza1.setData(dataGrafico1);
-        graficoPizza1.setDescription(null);
-        graficoPizza1.invalidate(); // Atualiza o gráfico
-        graficoPizza1.setDrawEntryLabels(true);
-        graficoPizza1.setHoleRadius(0); // Define o valor do buraco como 0 para preencher toda a área central com as cores das fatias
-        graficoPizza1.setTransparentCircleRadius(0); // Define o valor do círculo transparente como 0 para remover o círculo transparente no meio do gráfico
-        graficoPizza1.getLegend().setEnabled(false); // Desativa a legenda do gráfico 1
+        configurePieChart(graficoPizza1, entradasGrafico1);
 
-
-        // GRAFICO 2 ----------------------------------------------------------
-
-        // Configurar dados para o segundo gráfico de pizza
-        graficoPizza2.setTouchEnabled(true);
+        // Configurar gráfico 2
         ArrayList<PieEntry> entradasGrafico2 = new ArrayList<>();
         entradasGrafico2.add(new PieEntry(1f, "1"));
-        PieDataSet dataSetGrafico2 = new PieDataSet(entradasGrafico2, " ");
-        dataSetGrafico2.setColors(ColorTemplate.COLORFUL_COLORS); // Cores predefinidas
-        PieData dataGrafico2 = new PieData(dataSetGrafico2);
-        graficoPizza2.setData(dataGrafico2);
-        graficoPizza2.invalidate(); // Atualiza o gráfico
-        graficoPizza2.setDescription(null);
-        graficoPizza2.setDrawEntryLabels(true);
-        dataSetGrafico2.setDrawValues(false);
-        graficoPizza2.setHoleRadius(0); // Define o valor do buraco como 0 para preencher toda a área central com as cores das fatias
-        graficoPizza2.setTransparentCircleRadius(0); // Define o valor do círculo transparente como 0 para remover o círculo transparente no meio do gráfico
-        graficoPizza2.getLegend().setEnabled(false); // Desativa a legenda do gráfico 2
-
-
-        //GRAFICO 3 ---------------------------------------------------------
-        ArrayList<PieEntry> entradasGrafico3 = new ArrayList<>();
-        graficoPizza3.setTouchEnabled(true);
-        entradasGrafico3.add(new PieEntry(1f, "1"));
-        PieDataSet dataSetGrafico3 = new PieDataSet(entradasGrafico1, " ");
-        dataSetGrafico1.setColors(ColorTemplate.COLORFUL_COLORS); // Cores predefinidas
-        dataSetGrafico1.setDrawValues(false);
-        PieData dataGrafico3 = new PieData(dataSetGrafico1);
-        graficoPizza3.setData(dataGrafico1);
-        graficoPizza3.setDescription(null);
-        graficoPizza3.invalidate(); // Atualiza o gráfico
-        graficoPizza3.setDrawEntryLabels(true);
-        graficoPizza3.setHoleRadius(0); // Define o valor do buraco como 0 para preencher toda a área central com as cores das fatias
-        graficoPizza3.setTransparentCircleRadius(0); // Define o valor do círculo transparente como 0 para remover o círculo transparente no meio do gráfico
-        graficoPizza3.getLegend().setEnabled(false); // Desativa a legenda do gráfico 1
+        configurePieChart(graficoPizza2, entradasGrafico2);
 
 
 
@@ -128,11 +172,12 @@ public class Questao_Avaliacao_1 extends AppCompatActivity {
                     String label = selectedEntry.getLabel(); // Obtém o rótulo da fatia (número/fracao)
                     Toast.makeText(getApplicationContext(), "Valor selecionado: " + selectedValue + ", Rótulo: " + label, Toast.LENGTH_SHORT).show();
 
-                    if (label.equals(respostaCorreta1)) {
-                        Toast.makeText(getApplicationContext(), "Resposta correta!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Resposta incorreta.", Toast.LENGTH_SHORT).show();
-                    }
+
+                    // Atualize a soma e o TextView
+                    sumOfSelectedSlices += selectedValue;
+                    updateSumTextView(textViewSum1, sumOfSelectedSlices, selectedDenominator);
+
+
 
                 }
             }
@@ -141,7 +186,7 @@ public class Questao_Avaliacao_1 extends AppCompatActivity {
             public void onNothingSelected() {
                 // Ação a ser realizada quando nenhuma fatia está selecionada
             }
-        });
+        });;
 
         //LISTENER DO SEGUNDO GRAFICO ----------------------
 
@@ -152,15 +197,13 @@ public class Questao_Avaliacao_1 extends AppCompatActivity {
                     showDivisionInputDialog(graficoPizza2);
                 }else {
                     PieEntry selectedEntry = (PieEntry) e;
-                    float selectedValue = selectedEntry.getY(); // Obtém o valor da fatia selecionada
+                    float selectedValue2 = selectedEntry.getY(); // Obtém o valor da fatia selecionada
                     String label = selectedEntry.getLabel(); // Obtém o rótulo da fatia (número/fracao)
-                    Toast.makeText(getApplicationContext(), "Valor selecionado: " + selectedValue + ", Rótulo: " + label, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Valor selecionado: " + selectedValue2 + ", Rótulo: " + label, Toast.LENGTH_SHORT).show();
 
-                    if (label.equals(respostaCorreta2)) {
-                        Toast.makeText(getApplicationContext(), "Resposta correta!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Resposta incorreta.", Toast.LENGTH_SHORT).show();
-                    }
+                    // Atualize a soma e o TextView
+                    sumOfSelectedSlices2 += selectedValue2;
+                    updateSumTextView(textViewSum2, sumOfSelectedSlices2, selectedDenominator);
 
                 }
             }
@@ -174,45 +217,11 @@ public class Questao_Avaliacao_1 extends AppCompatActivity {
 
         //LISTENER DO SEGUNDO GRAFICO ----------------------
 
-        graficoPizza3.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
-            @Override
-            public void onValueSelected(Entry e, Highlight h) {
-                if (isGraph2Editable) {
-                    showDivisionInputDialog(graficoPizza3);
-                }else {
-                    PieEntry selectedEntry = (PieEntry) e;
-                    float selectedValue = selectedEntry.getY(); // Obtém o valor da fatia selecionada
-                    String label = selectedEntry.getLabel(); // Obtém o rótulo da fatia (número/fracao)
-                    Toast.makeText(getApplicationContext(), "Valor selecionado: " + selectedValue + ", Rótulo: " + label, Toast.LENGTH_SHORT).show();
 
-                    if (label.equals(respostaCorreta3)) {
-                        Toast.makeText(getApplicationContext(), "Resposta correta!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Resposta incorreta.", Toast.LENGTH_SHORT).show();
-                    }
-
-                }
-            }
-
-            @Override
-            public void onNothingSelected() {
-                // Ação a ser realizada quando nenhuma fatia está selecionada
-            }
-        });
-
-
-        //BOTAO DE IR PARA A SEGUNDA ETAPA DA QUESTAO
-        Button btnProximaEtapa = findViewById(R.id.btnProxima_etapa);
-        btnProximaEtapa.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                    primeiroEstagioLayout.setVisibility(View.GONE); // Esconde o layout do primeiro estágio
-                    segundoEstagioLayout.setVisibility(View.VISIBLE); // Exibe o layout do segundo estágio
-
-            }
-        });
 
     }
+
+
 
     private void showDivisionInputDialog(PieChart pieChart) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -250,6 +259,7 @@ public class Questao_Avaliacao_1 extends AppCompatActivity {
 
         for (int i = 1; i <= denominador; i++) {
             entries.add(new PieEntry(valorExibicao, "1/" + denominador)); // Use a fração fixa como rótulo
+
         }
 
         PieDataSet dataSet = new PieDataSet(entries, " ");
@@ -281,12 +291,64 @@ public class Questao_Avaliacao_1 extends AppCompatActivity {
             isGraph2Editable = false;
 
         }
-        if (pieChart == graficoPizza3) {
-            isGraph3Editable = false;
-        }
     }
 
+    private void updateSumTextView(TextView textView, float sumOfSelectedSlices, int selectedDenominator) {
+        int numerator = Math.round(sumOfSelectedSlices * selectedDenominator);
+        String fractionText = "Soma das Fatias: " + numerator + "/" + selectedDenominator;
+        textView.setText(fractionText);
+    }
+
+    private void setupSliceColors() {
+        sliceColors.add(ColorTemplate.rgb("#FF5733")); // Cor padrão para fatias
+        sliceColors.add(ColorTemplate.rgb("#66BB6A")); // Cor alterada para fatias selecionadas
+        // Adicione mais cores conforme necessário
+    }
+
+    private void configurePieChart(PieChart pieChart, ArrayList<PieEntry> entries) {
+        pieChart.setTouchEnabled(true);
+        PieDataSet dataSet = new PieDataSet(entries, " ");
+        dataSet.setColors(ColorTemplate.COLORFUL_COLORS);
+        dataSet.setDrawValues(false);
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+        pieChart.invalidate();
+        pieChart.setDescription(null);
+        pieChart.setDrawEntryLabels(true);
+        pieChart.setHoleRadius(0);
+        pieChart.setTransparentCircleRadius(0);
+        pieChart.getLegend().setEnabled(false);
+    }
+
+    private String getRespostaParte1FromDatabase() {
+        String respostaParte1 = "";
+
+        DatabaseHelper dbHelper = new DatabaseHelper(this);
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT resposta_parte1 FROM pergunta WHERE perguntaPrincipal = ?", new String[]{perguntaPrincipal.getText().toString()});
+
+        if (cursor.moveToFirst()) {
+            int columnIndex = cursor.getColumnIndex("resposta_parte1");
+            if (columnIndex >= 0) {
+                respostaParte1 = cursor.getString(columnIndex);
+            }
+        }
+
+        cursor.close();
+        db.close();
+
+        return respostaParte1;
+    }
+
+    //Função para verificar se a resposta está correta
 
 
 
 }
+
+
+
+
+
+

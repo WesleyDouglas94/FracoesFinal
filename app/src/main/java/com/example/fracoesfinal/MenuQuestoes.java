@@ -36,14 +36,14 @@ public class MenuQuestoes extends AppCompatActivity {
                 // Adiciona um campo de texto à AlertDialog
                 final EditText passwordEditText = new EditText(MenuQuestoes.this);
                 builder.setView(passwordEditText);
-
+ 
                 builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // Faz algo com a senha inserida pelo usuário
                         String senhaDigitada = passwordEditText.getText().toString();
 
-                        if (senhaDigitada.equals("+")) {
+                        if (senhaDigitada.equals("")) {
                             // A senha está correta, então direciona o usuário para a tela de introdução
                             Intent intent = new Intent(MenuQuestoes.this, MainActivity.class);
                             startActivity(intent);
